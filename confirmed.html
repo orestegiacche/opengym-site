@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Email confirmed — OpenGym</title>
+<title>Email confirmation — OpenGym</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #0f0a04;
@@ -89,7 +90,8 @@
     max-width: 520px;
   }
 
-  .check-circle {
+  /* Shared circle base for all three states */
+  .state-circle {
     width: 96px;
     height: 96px;
     margin: 0 auto 32px;
@@ -101,10 +103,24 @@
     justify-content: center;
   }
 
-  .check-circle svg {
+  .state-circle svg {
     width: 48px;
     height: 48px;
     color: var(--orange);
+  }
+
+  /* Loading spinner */
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(244, 124, 43, 0.18);
+    border-top-color: var(--orange);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   h1 {
@@ -121,9 +137,32 @@
     font-size: clamp(16px, 2vw, 20px);
     color: var(--muted);
     max-width: 420px;
-    margin: 0 auto 40px;
+    margin: 0 auto 16px;
     font-weight: 300;
     line-height: 1.7;
+  }
+
+  .subtitle.compact {
+    margin-bottom: 24px;
+  }
+
+  .secondary-line {
+    font-size: 15px;
+    color: var(--cream);
+    max-width: 420px;
+    margin: 0 auto 28px;
+    font-weight: 400;
+    opacity: 0.85;
+  }
+
+  .error-detail {
+    font-size: 12px;
+    color: var(--muted);
+    max-width: 420px;
+    margin: 0 auto 24px;
+    font-family: 'DM Sans', monospace;
+    opacity: 0.6;
+    word-break: break-word;
   }
 
   .home-link {
@@ -137,6 +176,9 @@
   }
 
   .home-link:hover { color: var(--cream); }
+
+  /* State visibility — JS toggles `hidden` */
+  [hidden] { display: none !important; }
 
   /* FOOTER */
   footer {
@@ -168,8 +210,9 @@
   @media (max-width: 768px) {
     nav { padding: 16px 20px; }
     main { padding: 60px 20px; }
-    .check-circle { width: 80px; height: 80px; margin-bottom: 24px; }
-    .check-circle svg { width: 40px; height: 40px; }
+    .state-circle { width: 80px; height: 80px; margin-bottom: 24px; }
+    .state-circle svg { width: 40px; height: 40px; }
+    .spinner { width: 40px; height: 40px; border-width: 3px; }
     footer { padding: 32px 20px; }
   }
 </style>
@@ -183,14 +226,44 @@
 
 <main>
   <div class="confirmed-inner">
-    <div class="check-circle" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12.5l4.5 4.5L19 7"/>
-      </svg>
+
+    <!-- Loading state (shown by default while verifyOtp runs) -->
+    <div id="state-loading">
+      <div class="state-circle" aria-hidden="true">
+        <div class="spinner"></div>
+      </div>
+      <h1>Verifying<span class="orange">…</span></h1>
+      <p class="subtitle">Hang tight — confirming your email now.</p>
     </div>
-    <h1>Email <span class="orange">confirmed.</span></h1>
-    <p class="subtitle">You're all set. Open the OpenGym app to sign in.</p>
-    <a href="index.html" class="home-link">← Back to opengym.app</a>
+
+    <!-- Success state -->
+    <div id="state-success" hidden>
+      <div class="state-circle" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12.5l4.5 4.5L19 7"/>
+        </svg>
+      </div>
+      <h1>Email <span class="orange">confirmed.</span></h1>
+      <p class="subtitle">You're all set. Open the OpenGym app to sign in.</p>
+      <a href="index.html" class="home-link">← Back to opengym.app</a>
+    </div>
+
+    <!-- Error state -->
+    <div id="state-error" hidden>
+      <div class="state-circle" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="8" x2="12" y2="13"/>
+          <circle cx="12" cy="16.5" r="0.5" fill="currentColor"/>
+          <circle cx="12" cy="12" r="9"/>
+        </svg>
+      </div>
+      <h1>Confirmation <span class="orange">failed.</span></h1>
+      <p class="subtitle compact">This link is invalid or has expired.</p>
+      <p class="secondary-line">Return to the OpenGym app and tap <strong>Resend email</strong> to get a new link.</p>
+      <p id="error-detail" class="error-detail" hidden></p>
+      <a href="index.html" class="home-link">← Back to opengym.app</a>
+    </div>
+
   </div>
 </main>
 
@@ -203,6 +276,87 @@
   </p>
   <p style="margin-top:16px;">© 2026 OpenGym. All rights reserved.</p>
 </footer>
+
+<script>
+  // Supabase email confirmation via JS-based OTP verification.
+  //
+  // Why this exists: Gmail (and other providers' phishing scanners)
+  // pre-fetch every link in incoming email. Supabase's default GET-based
+  // confirmation URL consumes the one-time token on that pre-fetch, so by
+  // the time the human clicks, the token is already burned and the
+  // confirmation fails with "Email link is invalid or has expired."
+  //
+  // Pre-scanners follow links but don't execute JavaScript. By moving the
+  // verifyOtp call into client-side JS, the token survives the pre-fetch
+  // and is only consumed when the actual user's browser runs the script.
+
+  // TODO: paste the Supabase anon key here. It's the public client-side
+  // key — safe to ship in static HTML. Find it in the iOS project at
+  // TravelFit/Config/SupabaseConfig.swift (`anonKey` constant).
+  const SUPABASE_URL = 'https://ipdxeexqeedcijsdrvbn.supabase.co';
+  const SUPABASE_ANON_KEY = 'ANON_KEY_GOES_HERE';
+
+  const stateLoading = document.getElementById('state-loading');
+  const stateSuccess = document.getElementById('state-success');
+  const stateError = document.getElementById('state-error');
+  const errorDetail = document.getElementById('error-detail');
+
+  function showState(which) {
+    stateLoading.hidden = which !== 'loading';
+    stateSuccess.hidden = which !== 'success';
+    stateError.hidden = which !== 'error';
+  }
+
+  function showError(message) {
+    if (message) {
+      errorDetail.textContent = message;
+      errorDetail.hidden = false;
+    }
+    showState('error');
+  }
+
+  async function verifyEmail() {
+    // Supabase appends the token as `token_hash` and the verification
+    // type as `type`. For signup confirmation the type is `email`. We
+    // default to `email` if it's missing for resilience.
+    const params = new URLSearchParams(window.location.search);
+    const tokenHash = params.get('token_hash');
+    const type = params.get('type') || 'email';
+
+    if (!tokenHash) {
+      showError('Missing confirmation token in the URL.');
+      return;
+    }
+
+    if (SUPABASE_ANON_KEY === 'ANON_KEY_GOES_HERE') {
+      showError('Page not yet configured — anon key missing.');
+      return;
+    }
+
+    try {
+      const { createClient } = window.supabase;
+      const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { error } = await client.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: type
+      });
+
+      if (error) {
+        showError(error.message || String(error));
+        return;
+      }
+
+      showState('success');
+    } catch (err) {
+      showError(err && err.message ? err.message : String(err));
+    }
+  }
+
+  // Kick off as soon as the script runs. The Supabase SDK script tag in
+  // <head> is blocking, so window.supabase is guaranteed to be defined
+  // by the time we reach this point.
+  verifyEmail();
+</script>
 
 </body>
 </html>
