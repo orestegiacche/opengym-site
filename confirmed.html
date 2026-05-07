@@ -370,6 +370,9 @@
   }
 
   async function confirmEmail() {
+    const btn = document.getElementById("confirm-button");
+    if (btn.disabled) return;
+    btn.disabled = true;
     const { tokenHash, type } = readParams();
 
     if (!tokenHash) {
