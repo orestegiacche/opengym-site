@@ -365,7 +365,7 @@
     const params = new URLSearchParams(window.location.search);
     return {
       tokenHash: params.get('token_hash'),
-      type: params.get('type') || 'signup'
+      type: params.get('type') || 'email'
     };
   }
 
