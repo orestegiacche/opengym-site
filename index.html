@@ -475,51 +475,6 @@
     box-shadow: 0 8px 30px rgba(244, 124, 43, 0.4);
   }
 
-  /* PRIVACY */
-  .privacy-section {
-    padding: 100px 40px;
-    max-width: 760px;
-    margin: 0 auto;
-  }
-
-  .privacy-section h2 {
-    font-family: 'Anton', sans-serif;
-    font-size: 48px;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-  }
-
-  .privacy-date {
-    color: var(--muted);
-    font-size: 14px;
-    margin-bottom: 48px;
-  }
-
-  .privacy-section h3 {
-    font-family: 'Anton', sans-serif;
-    font-size: 22px;
-    letter-spacing: 0.5px;
-    color: var(--orange);
-    margin: 40px 0 16px;
-  }
-
-  .privacy-section p {
-    color: var(--muted);
-    font-size: 15px;
-    line-height: 1.8;
-    margin-bottom: 16px;
-  }
-
-  .privacy-section ul {
-    color: var(--muted);
-    font-size: 15px;
-    line-height: 1.8;
-    padding-left: 20px;
-    margin-bottom: 16px;
-  }
-
-  .privacy-section ul li { margin-bottom: 8px; }
-
   /* SUPPORT */
   .support-card {
     background: var(--bg2);
@@ -568,15 +523,6 @@
 
   footer a:hover { color: var(--cream); }
 
-  .footer-logo {
-    font-family: 'Anton', sans-serif;
-    font-size: 20px;
-    margin-bottom: 16px;
-    letter-spacing: 1px;
-  }
-
-  .footer-logo span { color: var(--orange); }
-
   /* DIVIDER */
   .divider {
     border: none;
@@ -593,7 +539,6 @@
     .stats { grid-template-columns: repeat(2, 1fr); }
     .features-inner { padding: 0 20px; }
     .features-full { padding: 80px 0; }
-    .privacy-section { padding: 80px 20px; }
     .support-card { padding: 32px 20px; }
     .pricing-card { padding: 32px 20px; }
   }
@@ -787,76 +732,13 @@
   </div>
 </section>
 
-<hr class="divider">
-
-<!-- PRIVACY POLICY -->
-<div class="privacy-section">
-  <div class="fade-in">
-    <div class="section-label">Legal</div>
-    <h2>Privacy Policy</h2>
-    <div class="privacy-date">Last updated: May 2026</div>
-
-    <h3>Overview</h3>
-    <p>OpenGym ("we", "our", or "the app") is committed to protecting your privacy. This policy explains what data we collect, how we use it, and your rights.</p>
-
-    <h3>Data We Collect</h3>
-    <p>When you use OpenGym without an account, all data is stored locally on your device only. We have no access to it.</p>
-    <p>When you create a free account, the following data is stored securely in our cloud database (Supabase):</p>
-    <ul>
-      <li>Email address (used for account authentication only)</li>
-      <li>Display name (optional, set by you)</li>
-      <li>Fitness profile: fitness level, sex, age, height, weight (optional, used only for calorie estimates)</li>
-      <li>Workout completion history</li>
-      <li>Favorite workouts</li>
-      <li>Scheduled workouts and training plans</li>
-      <li>App preferences (units, equipment defaults)</li>
-    </ul>
-
-    <h3>How We Use Your Data</h3>
-    <ul>
-      <li>To sync your data across your devices</li>
-      <li>To calculate personalized calorie estimates</li>
-      <li>To power the smart workout generator</li>
-      <li>To restore your data if you reinstall the app</li>
-    </ul>
-    <p>We do not sell your data. We do not share your data with third parties. We do not use your data for advertising.</p>
-
-    <h3>Third Party Services</h3>
-    <p>OpenGym uses the following third party services:</p>
-    <ul>
-      <li><strong>Supabase</strong> — secure cloud database and authentication. Data is stored in encrypted form. <a href="https://supabase.com/privacy" style="color:var(--orange);">Supabase Privacy Policy</a></li>
-      <li><strong>Sign in with Apple</strong> — optional authentication method. Governed by Apple's privacy policy.</li>
-      <li><strong>Sign in with Google</strong> — optional authentication method. Governed by Google's privacy policy.</li>
-      <li><strong>Apple HealthKit</strong> — optional integration to write completed workouts to the Health app. We only write data, we never read from HealthKit. This feature requires your explicit permission.</li>
-    </ul>
-
-    <h3>Data Retention</h3>
-    <p>Your data is retained for as long as you have an account. You can delete your account at any time from the Profile tab in the app. Account deletion permanently removes all your data from our servers within 30 days.</p>
-
-    <h3>Children's Privacy</h3>
-    <p>OpenGym is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13.</p>
-
-    <h3>Your Rights</h3>
-    <p>You have the right to access, correct, or delete your personal data at any time. To exercise these rights, contact us at opengym.support@gmail.com or use the account deletion feature in the app.</p>
-
-    <h3>Changes to This Policy</h3>
-    <p>We may update this privacy policy from time to time. Significant changes will be communicated through the app. The date at the top of this page reflects the most recent update.</p>
-
-    <h3>Contact</h3>
-    <p>For privacy-related questions or requests, contact us at:<br>
-    <a href="mailto:opengym.support@gmail.com" style="color:var(--orange);">opengym.support@gmail.com</a></p>
-  </div>
-</div>
-
 <!-- FOOTER -->
 <footer>
-  <div class="footer-logo">Open<span>Gym</span></div>
-  <p style="margin-bottom:12px;">The world is your gym.</p>
-  <p>
-    <a href="#privacy">Privacy Policy</a> &nbsp;·&nbsp;
+  <p>© 2026 OpenGym · The world is your gym.</p>
+  <p style="margin-top:8px;">
+    <a href="/privacy.html">Privacy Policy</a> &nbsp;·&nbsp;
     <a href="mailto:opengym.support@gmail.com">Support</a>
   </p>
-  <p style="margin-top:16px;">© 2026 OpenGym. All rights reserved.</p>
 </footer>
 
 <script>
