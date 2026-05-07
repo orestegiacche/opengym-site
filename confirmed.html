@@ -200,6 +200,32 @@
   .cta-button:active { transform: scale(0.98); }
   .cta-button:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 
+  /* OTP code display — disabled input that shows the 6-digit code from
+     the email URL, pre-filled. Styled to match the code box in the
+     Supabase email template so users recognize it as the same code. */
+  .otp-code-display {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto 24px;
+    padding: 20px;
+    background: #2e2218;
+    border: 2px solid var(--orange);
+    border-radius: 12px;
+    font-family: 'DM Sans', monospace;
+    font-size: 34px;
+    font-weight: 600;
+    color: var(--orange);
+    text-align: center;
+    letter-spacing: 8px;
+    box-sizing: border-box;
+  }
+
+  .otp-code-display:disabled {
+    opacity: 1;
+    cursor: default;
+  }
+
   /* State visibility — JS toggles `hidden` */
   [hidden] { display: none !important; }
 
@@ -250,10 +276,12 @@
 <main>
   <div class="confirmed-inner">
 
-    <!-- Ready state (initial state when token is present in URL).
-         Confirmation is gated behind a real user click so email-provider
-         link scanners can't consume the one-time token by pre-fetching. -->
-    <div id="state-ready">
+    <!-- OTP state (initial state when otp + email are present in URL).
+         The 6-digit code is pre-filled in a disabled input so the user
+         sees it; verifyOtp is gated behind a real user click so that
+         email-provider link scanners can't consume the code by pre-
+         fetching the URL. -->
+    <div id="state-otp">
       <div class="state-circle" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="5" width="18" height="14" rx="2"/>
@@ -261,7 +289,8 @@
         </svg>
       </div>
       <h1>Confirm your <span class="orange">email.</span></h1>
-      <p class="subtitle">Tap the button below to verify your email address and activate your OpenGym account.</p>
+      <p class="subtitle">Your confirmation code has been filled in. Tap the button to verify.</p>
+      <input id="otp-display" class="otp-code-display" type="text" disabled aria-label="Confirmation code" />
       <button id="confirm-button" class="cta-button" type="button">Confirm my email</button>
       <a href="index.html" class="home-link">← Back to opengym.app</a>
     </div>
@@ -322,29 +351,29 @@
   //
   // Why this exists: Gmail (and other providers' phishing scanners)
   // pre-fetch every link in incoming email. Supabase's default GET-based
-  // confirmation URL consumes the one-time token on that pre-fetch, so by
-  // the time the human clicks, the token is already burned and the
+  // confirmation URL consumes the one-time code on that pre-fetch, so by
+  // the time the human clicks, the code is already burned and the
   // confirmation fails with "Email link is invalid or has expired."
   //
-  // Pre-scanners follow links but don't execute JavaScript. By moving the
-  // verifyOtp call into client-side JS, the token survives the pre-fetch
-  // and is only consumed when the actual user's browser runs the script.
+  // Pre-scanners follow links but don't tap buttons. By passing the OTP
+  // (`otp`) and `email` in the URL, pre-filling the code into a disabled
+  // input, and gating the verifyOtp call behind a real user click, the
+  // code survives the pre-fetch and is only consumed when the user
+  // actually taps "Confirm my email".
 
-  // TODO: paste the Supabase anon key here. It's the public client-side
-  // key — safe to ship in static HTML. Find it in the iOS project at
-  // TravelFit/Config/SupabaseConfig.swift (`anonKey` constant).
   const SUPABASE_URL = 'https://ipdxeexqeedcijsdrvbn.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlwZHhlZXhxZWVkY2lqc2RydmJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5ODU0NjEsImV4cCI6MjA5MzU2MTQ2MX0.ZhegsSxamJ05FpyUNzjUNPwE5gkNuj4yNaCymGOLYD4';
 
-  const stateReady = document.getElementById('state-ready');
+  const stateOtp = document.getElementById('state-otp');
   const stateLoading = document.getElementById('state-loading');
   const stateSuccess = document.getElementById('state-success');
   const stateError = document.getElementById('state-error');
   const errorDetail = document.getElementById('error-detail');
   const confirmButton = document.getElementById('confirm-button');
+  const otpDisplay = document.getElementById('otp-display');
 
   function showState(which) {
-    stateReady.hidden = which !== 'ready';
+    stateOtp.hidden = which !== 'otp';
     stateLoading.hidden = which !== 'loading';
     stateSuccess.hidden = which !== 'success';
     stateError.hidden = which !== 'error';
@@ -358,27 +387,28 @@
     showState('error');
   }
 
-  // Read the token + type once on init. Used both for the initial
+  // Read the otp + email + type once on init. Used both for the initial
   // route-to-error-if-missing check and for the actual verifyOtp call
   // when the user taps the button.
   function readParams() {
     const params = new URLSearchParams(window.location.search);
     return {
-      tokenHash: params.get('token_hash'),
+      otp: params.get('otp'),
+      email: params.get('email'),
       type: params.get('type') || 'email'
     };
   }
 
   let isVerifying = false;
   async function confirmEmail() {
-    const btn = document.getElementById("confirm-button");
     if (isVerifying) return;
     isVerifying = true;
-    btn.disabled = true;
-    const { tokenHash, type } = readParams();
+    confirmButton.disabled = true;
 
-    if (!tokenHash) {
-      showError('Missing confirmation token in the URL.');
+    const { otp, email, type } = readParams();
+
+    if (!otp || !email) {
+      showError('Missing confirmation code or email address.');
       return;
     }
 
@@ -393,7 +423,8 @@
       const { createClient } = window.supabase;
       const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       const { error } = await client.auth.verifyOtp({
-        token_hash: tokenHash,
+        email: email,
+        token: otp,
         type: type
       });
 
@@ -408,17 +439,18 @@
     }
   }
 
-  // On page load: if the token is missing show the error state right
-  // away (nothing the user can do). Otherwise stay on `state-ready` and
-  // wait for an explicit button click — that's what makes this scanner-
-  // proof, since email link pre-scanners follow URLs but don't tap
-  // buttons.
+  // On page load: if otp or email is missing show the error state right
+  // away (nothing the user can do). Otherwise pre-fill the code into the
+  // display input and wait for an explicit button click — that's what
+  // makes this scanner-proof, since email link pre-scanners follow URLs
+  // but don't tap buttons.
   (function init() {
-    const { tokenHash } = readParams();
-    if (!tokenHash) {
-      showError('Missing confirmation token in the URL.');
+    const { otp, email } = readParams();
+    if (!otp || !email) {
+      showError('Missing confirmation code or email address.');
       return;
     }
+    otpDisplay.value = otp;
     confirmButton.addEventListener('click', confirmEmail);
   })();
 </script>
